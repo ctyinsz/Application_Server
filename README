@@ -1,0 +1,23 @@
+C编写的应用服务器框架：
+多线程+线程池+内存池
+epoll
+Linux
+
+
+
+
+修改linux 最大文件限制数 ulimit
+1、echo ulimit -n 65535 >>/etc/profile
+	source /etc/profile
+2、修改linux的软硬件限制文件/etc/security/limits.conf
+	* soft nofile 65535
+	* hard nofile 65535
+3、修改sshd
+# vim /etc/pam.d/sshd
+	[Add the line]
+	session    required   /lib/security/pam_limits.so
+# service sshd restart
+4、修改sshd_config
+# vim /etc/ssh/sshd_config
+	[May need to modify or add the line]
+	UsePrivilegeSeparation no
