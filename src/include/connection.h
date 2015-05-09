@@ -1,6 +1,7 @@
 #ifndef _CONN_H_
 #define _CONN_H_
 
+
 #include	"gas.inc"
 
 typedef struct _Connection

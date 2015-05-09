@@ -3,26 +3,6 @@
 
 #include	"gas.inc"
 
-#define MEMPOOL
-//#define SESSPOOL
-//#define NOPOOL
-
-#define MEMPOOLINITSIZE  1024*5
-#define MEMPOOLGROWSIZE	 1024
-
-#define LEN_COMMBUF 20000
-#define RECVBUF 2048
-#define SENDBUF 2048
-#define RCVTIMEOUT 10
-#define SNDTIMEOUT 10
-#define CONTIMEOUT 2
-#define CLOSEWAIT  5
-#define MAXEPOLLEVENTS  1024
-#define MAXEPOLLSIZE		100000
-#define MAX_WRITE_TRIES 1024
-#define MAX_READ_TRIES  1024
-#define set_val(p,v)  while(!(__sync_bool_compare_and_swap(p,*p,v)))
-
 typedef struct _Receiver
 {
 	int epfd;

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="GBK"?>
+
+<hsdoc>
+  <docversion>1.0.0</docversion>
+  <checkcode>A3DC654A38B86597A5045B1E72F66210</checkcode>
+  <levelcheck>6967524176373451446D453D</levelcheck>
+  <appresreg resclass="415" ressubclass="400" resname="mainflow" rescname="" reslabel="" resversn="" useflag="0" activeflag="0" extflag="" readyflag="0" checkcode="" lastModify="2014-10-12-19:53:15" lastModifer="陈天宇" rescreator="陈天宇" createdate="2014-10-12 19:52:42" reslevel="9" subclass="" bgcolor="255,255,255">
+    <snote></snote>
+    <document></document>
+    <flowcfg>
+      <comp flowsn="1" compname="BEGIN" itemtype="1" debuglog="0" position="312,45,70,30" fgcolor="0,0,0" bgcolor="255,255,255">
+        <snote></snote>
+        <chineseName></chineseName>
+        <fcompstatcfgs>
+          <cfg compstatus="0" nextflowsn="3" statustype="0">
+            <snote></snote>
+            <bendpoints/>
+          </cfg>
+          <cfg compstatus="-9999" nextflowsn="-8888" statustype="0">
+            <snote></snote>
+          </cfg>
+        </fcompstatcfgs>
+        <fcompparacfgs/>
+      </comp>
+      <comp flowsn="5" compname="END" itemtype="2" debuglog="0" position="317,266,60,30" fgcolor="0,0,0" bgcolor="255,255,255">
+        <snote></snote>
+        <chineseName></chineseName>
+        <fcompstatcfgs/>
+        <fcompparacfgs/>
+      </comp>
+      <comp flowsn="2" compname="DATA_MSetValue" itemtype="0" debuglog="0" position="368,174,129,51" fgcolor="0,0,0" bgcolor="255,255,255">
+        <snote></snote>
+        <chineseName>多个XML元素赋值</chineseName>
+        <fcompstatcfgs>
+          <cfg compstatus="-9999" nextflowsn="-8888" statustype="0">
+            <snote>缺省</snote>
+          </cfg>
+          <cfg compstatus="0" nextflowsn="5" statustype="0">
+            <snote>成功</snote>
+            <bendpoints/>
+          </cfg>
+        </fcompstatcfgs>
+        <fcompparacfgs>
+          <cfg resclass="413" paracont="0" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+          <cfg resclass="416" paracont="/cmsfront/req/body/urgency_flag=2" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+        </fcompparacfgs>
+      </comp>
+      <comp flowsn="3" compname="DATA_ValCompare" itemtype="0" debuglog="0" position="282,94,129,51" fgcolor="0,0,0" bgcolor="255,255,255">
+        <snote></snote>
+        <chineseName>数值比较组件</chineseName>
+        <fcompstatcfgs>
+          <cfg compstatus="-9999" nextflowsn="-8888" statustype="0">
+            <snote>缺省</snote>
+          </cfg>
+          <cfg compstatus="1" nextflowsn="4" statustype="0">
+            <snote>真</snote>
+            <bendpoints/>
+          </cfg>
+          <cfg compstatus="0" nextflowsn="2" statustype="0">
+            <snote>假</snote>
+            <bendpoints/>
+          </cfg>
+        </fcompstatcfgs>
+        <fcompparacfgs>
+          <cfg resclass="413" paracont="2" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+          <cfg resclass="416" paracont="[/cmsfront/req/body/amt]" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+          <cfg resclass="413" paracont="&gt;" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+          <cfg resclass="416" paracont="50000.00" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+        </fcompparacfgs>
+      </comp>
+      <comp flowsn="4" compname="DATA_MSetValue" itemtype="0" debuglog="0" position="205,174,129,51" fgcolor="0,0,0" bgcolor="255,255,255">
+        <snote></snote>
+        <chineseName>多个XML元素赋值</chineseName>
+        <fcompstatcfgs>
+          <cfg compstatus="-9999" nextflowsn="-8888" statustype="0">
+            <snote>缺省</snote>
+          </cfg>
+          <cfg compstatus="0" nextflowsn="5" statustype="0">
+            <snote>成功</snote>
+            <bendpoints/>
+          </cfg>
+        </fcompstatcfgs>
+        <fcompparacfgs>
+          <cfg resclass="413" paracont="0" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+          <cfg resclass="416" paracont="/cmsfront/req/body/urgency_flag=0" dict="" paratype="0">
+            <snote></snote>
+            <fcomptranscfgs/>
+          </cfg>
+        </fcompparacfgs>
+      </comp>
+    </flowcfg>
+  </appresreg>
+</hsdoc>

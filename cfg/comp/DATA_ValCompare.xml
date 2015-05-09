@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="GBK"?>
+
+<hsdoc>
+  <docversion>1.0.0</docversion>
+  <checkcode>A3634DB92C2CC87AD67565384DB19F29</checkcode>
+  <levelcheck>57663434313372796D49343D</levelcheck>
+  <liccode></liccode>
+  <appresreg resclass="414" ressubclass="4" resname="DATA_ValCompare" rescname="数值比较组件" reslabel="" resversn="" useflag="0" activeflag="0" extflag="00000000" readyflag="0" checkcode="" lastModify="2011-07-16 11:29:21" lastModifer="时宁" rescreator="" createdate="" reslevel="1" subclass="数据元素组件集">
+    <snote></snote>
+    <document></document>
+    <pkgregex compcname="数值比较组件" compfuncname="SDATA_ValCompare" compfile="pub.so" comptype="0" paratype="0" stattype="0" compset="4" debuglog="0" extflag="00000000" sourcefile="~/src/dcomp_src/SDATA.c" foreground="RGB {0, 0, 0}" background="RGB {255, 255, 255}"/>
+    <compparam>
+      <param parasn="0" resclass="413" dftcont="2" nullflag="1" paracname="运算精度" dctname="" snote=""/>
+      <param parasn="1" resclass="416" dftcont="" nullflag="0" paracname="运算表达式1" dctname="" snote=""/>
+      <param parasn="2" resclass="413" dftcont="==" nullflag="0" paracname="比较方式" dctname="" snote=""/>
+      <param parasn="3" resclass="416" dftcont="" nullflag="0" paracname="运算表达式2" dctname="" snote=""/>
+    </compparam>
+    <statuscfgs>
+      <status compstatus="-9999" dfttransc="0" snote="缺省"/>
+      <status compstatus="1" dfttransc="0" snote="真"/>
+      <status compstatus="0" dfttransc="0" snote="假"/>
+    </statuscfgs>
+  </appresreg>
+</hsdoc>

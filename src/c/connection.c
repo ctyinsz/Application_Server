@@ -41,9 +41,7 @@ Connection_t* GetConnectionByKey(Server_t* svr,int key)
 {
 	if(svr == NULL)
 		return NULL;
-	char skey[20]={0};
-	sprintf(skey,"%d",key);
-	Connection_t** hash_node = (Connection_t**)map_get(&svr->mConnectionInfo,skey);
+	Connection_t** hash_node = (Connection_t**)map_get(&svr->mConnectionInfo,key);
 	if(hash_node)
 		return *hash_node;
 	return NULL;
@@ -90,16 +88,19 @@ Connection_t* GetConnection(Server_t* sp)
 
 #ifdef	NOPOOL
 	Connection_t* connection = (Connection_t*)calloc(1,sizeof(Connection_t));	
+	if(!connection) return NULL;
 #endif
 	
 #ifdef	SESSPOOL
 	pthread_mutex_lock(&sp->mConnectionPool.lock);
 	Connection_t* connection = (Connection_t*)queue_popfront(&sp->mConnectionPool.s_unused);
+	if(!connection) return NULL;
 	pthread_mutex_unlock(&sp->mConnectionPool.lock);
 #endif	
 
 #ifdef	MEMPOOL	
 	Connection_t* connection = (Connection_t*)Mem_Alloc(&sp->mMempool);
+	if(!connection) return NULL;
 	memset(connection,0x00,sizeof(Connection_t));
 #endif	
 	
@@ -136,13 +137,11 @@ void CloseConnection(Connection_t* connection)
 	Connection_t **tmp;
 	
 	int client_sockfd = connection->socketfd;
-	char key[20]={0};
-	sprintf(key,"%d",client_sockfd);
 	
-	tmp = (Connection_t**)map_get(&svr->mConnectionInfo,key);	
+	tmp = (Connection_t**)map_get(&svr->mConnectionInfo,client_sockfd);	
 	if(tmp == NULL)		return;
 	
-	map_remove(&svr->mConnectionInfo,key);
+	map_remove(&svr->mConnectionInfo,client_sockfd);
 	ReleaseConnection(connection);
 	
 //	epoll_ctl(svr->Recv_task.epfd, EPOLL_CTL_DEL, client_sockfd,NULL);
@@ -198,17 +197,24 @@ int RecvAllData(Connection_t * conn)
 		return -1;
 	
 	int n,rc = 0,cnt = 0;
+	int commbuflen = LEN_COMMHEAD; //sizeof(conn->commbuf);
+	n = recv(conn->socketfd, conn->commbuf, commbuflen,MSG_WAITALL);
+//	LOG(LL_NOTICE,"commbuflen n [%d],fd:[%d]",n,conn->socketfd);
+	if(n != LEN_COMMHEAD)
+		return -1;
+	commbuflen = atoi(conn->commbuf);
+	commbuflen = sizeof(conn->commbuf)>commbuflen?commbuflen:sizeof(conn->commbuf);
+//	LOG(LL_NOTICE,"commbuflen [%d],fd:[%d]",commbuflen,conn->socketfd);
 	do
 	{
-		n = recv(conn->socketfd, rc + conn->commbuf, sizeof(conn->commbuf)-rc,0);
-		LOG(LL_DEBUG,"Socket[%d] seq[%d] recv ret[%d],error[%s]buf[%s]",conn->socketfd,conn->seqno,n,strerror(errno),conn->commbuf);
+		n = recv(conn->socketfd, rc + conn->commbuf, commbuflen-rc,0);
 		if(n > 0)
 		{
 			rc += n;
 		}
 		else if(n == 0)
 		{
-			return 0;
+				return 0;
 		}
 		else
 		{
@@ -229,8 +235,8 @@ int RecvAllData(Connection_t * conn)
 					return -1;
 			}
 		}
-	}while(rc < sizeof(conn->commbuf));
-	
+	}while(rc < commbuflen);
+	conn->commbuf[rc] = 0;
 	pthread_mutex_lock(&conn->lock);
 	conn->buflen = rc;
 	conn->timestamp = gettimestamp();
@@ -248,7 +254,7 @@ int SendAllData(Connection_t * conn)
 	do
 	{
 		n = send(conn->socketfd, rc + conn->commbuf, conn->buflen-rc,0);
-		LOG(LL_DEBUG,"Socket[%d] seq[%d] send ret[%d],error[%s]buf[%s]",conn->socketfd,conn->seqno,n,strerror(errno),conn->commbuf);
+//		LOG(LL_DEBUG,"Socket[%d] seq[%d] send ret[%d],error[%s]buf[%s]",conn->socketfd,conn->seqno,n,strerror(errno),conn->commbuf);
 		if(n == -1)
 		{
 			if (cnt > MAX_WRITE_TRIES)

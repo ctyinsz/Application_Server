@@ -7,7 +7,7 @@ int Server_init(Server_t *svr,int port,int th_pool_size,int s_pool_zsie)
 	svr->keepalive = 1;
 	svr->seq_no = 0;
 
-	map_init(&svr->mConnectionInfo);
+	map_init(&svr->mConnectionInfo,MAPSIZE);
 #ifdef	SESSPOOL	
 	ret = ConnectionPool_create(&svr->mConnectionPool,s_pool_zsie);
 	if(!ret)
@@ -102,7 +102,6 @@ void Server_thread_accept(void* para_p)
 	Server_t* svr = (Server_t*)para_p;
 	Connection_t* conn;
 	Receiver_t* recv_p = &svr->Recv_task;
-	char key[20] = {0};
 	
 	struct   timeval   start,diff; 
 
@@ -142,39 +141,39 @@ void Server_thread_accept(void* para_p)
 		}
 		if(client_sock > 0)
 		{
-//			printf("\nopen communication with  Client %s on socket %d\n",inet_ntoa(client_sockaddr.sin_addr), client_sock);
-			LOG(LL_NOTICE,"Open communication with  Client %s on socket %d\n",inet_ntoa(client_sockaddr.sin_addr), client_sock);
-			gettimeofday(&start,0);
-			//保存socket和序列号到队列
-			conn = GetConnection(svr);
-			if(conn == NULL)
-				continue;
-				
+//			LOG(LL_NOTICE,"Open communication with  Client %s on socket %d\n",inet_ntoa(client_sockaddr.sin_addr), client_sock);
+
 			set_nonblocking(client_sock);
-			Connection_init(conn,svr,client_sock,svr->seq_no++);  //  __sync_fetch_and_add(&svr->seq_no,1)
-			double t1 = timeval_subtract(&diff,&start,0);
 			memset(&event,0x00,sizeof(event));
-			event.events = EPOLLIN|EPOLLET;
+			event.events = EPOLLIN;
 			event.data.fd = client_sock;
-			conn->status = 1;
-			ret = epoll_ctl(recv_p->epfd, EPOLL_CTL_ADD, conn->socketfd, &event);
+			
+			ret = epoll_ctl(recv_p->epfd, EPOLL_CTL_ADD, client_sock, &event);
 			if(ret < 0)
 			{
 				LOG(LL_NOTICE,"epoll_ctl ret[%d][%s]",errno,strerror(errno));
 				continue;
 			}
-			double t2 = timeval_subtract(&diff,&start,0);
+			
+			//保存socket和序列号到队列
+			conn = GetConnection(svr);
+			if(conn == NULL)
+			{
+				close(client_sock);
+				continue;
+			}
+			Connection_init(conn,svr,client_sock,svr->seq_no++);  //  __sync_fetch_and_add(&svr->seq_no,1)
+			conn->status = 1;
+
 			__sync_fetch_and_add(&recv_p->poll_ev_num,1);
-			double t3 = timeval_subtract(&diff,&start,0);
+
 //			pthread_mutex_lock(&recv_p->lock);
 //			recv_p->poll_ev_num++;
 //			pthread_mutex_unlock(&recv_p->lock);
 			
 			//将该任务的时间戳记录到hash表
-			sprintf(key,"%d",client_sock);
-			map_set(&svr->mConnectionInfo,key, (void*)conn);
-			double t4 = timeval_subtract(&diff,&start,0);
-			LOG(LL_NOTICE,"Socket[%d] Connected,seq[%d],time[%f,%f,%f,%f,%f]",client_sock,conn->seqno,t1,t2,t3,t4,t1+t2+t3+t4);
+			map_set(&svr->mConnectionInfo,client_sock, (void*)conn);
+			LOG(LL_NOTICE,"Socket[%d] Connected,seq[%d]",client_sock,conn->seqno);
 		}
 	}
 	close(server_sock);
@@ -207,14 +206,16 @@ void Server_thread_recv(void* para_p)
 			client_sockfd = events[i].data.fd;
 			if(client_sockfd < 0)
 				continue;
-//			printf("socket[%d] has event[%x].\n",client_sockfd,events[i].events);		
 			conn = GetConnectionByKey(svr,client_sockfd);
 			if(conn == NULL)
+			{
+				close(client_sockfd);
 				continue;
+			}
 			
 			LOG(LL_NOTICE,"Socket[%d] seq[%d] has event[%x].",client_sockfd,conn->seqno,events[i].events);
 			
-			if(events[i].events&EPOLLERR)
+			if((events[i].events&EPOLLERR)||(events[i].events&EPOLLHUP))
 			{
 				CloseConnection(conn);
 				conn = NULL;
@@ -222,16 +223,16 @@ void Server_thread_recv(void* para_p)
 			else if(events[i].events&EPOLLIN)
 			{
 				n = RecvAllData(conn);
-//				n = recv(client_sockfd,conn->commbuf, sizeof(conn->commbuf),0);
 //				LOG(LL_DEBUG,"Socket[%d] seq[%d] recv ret[%d],error[%s]buf[%s]",client_sockfd,conn->seqno,n,strerror(errno),conn->commbuf);
-//				printf("socket[%d] recv ret[%d],error[%s]buf[%s]\n",client_sockfd,n,strerror(errno),conn->commbuf);
 				if(n <= 0)
 				{
+					LOG(LL_DEBUG,"Socket[%d] seq[%d] recv ret[%d],error[%s]",client_sockfd,conn->seqno,n,strerror(errno));
 					CloseConnection(conn);
 					conn = NULL;
 				}
 				else
 				{
+					LOG(LL_DEBUG,"Socket[%d] seq[%d] recv ret[%d],buf[%s]",client_sockfd,conn->seqno,n,conn->commbuf);
 					ret = thpool_add_work(&svr->thpool_p,(void*)thpool_task,(void*)conn);
 				}
 			}
@@ -256,17 +257,23 @@ void* thpool_task(void* arg)
 	int ret;
 
 	LOG(LL_NOTICE,"in thpool,task sock[%d],seq=[%d]!",client_sockfd,conn->seqno);
-//	printf("in thpool,task sock[%d],seq=[%d]\n",client_sockfd,conn->seqno);
 
-		pthread_mutex_lock(&conn->lock);
+	pthread_mutex_lock(&conn->lock);
 
-		ret = DoRequest(conn);
-		if(ret == TRUE)
+	ret = DoRequest(conn);
+	if(ret == TRUE)
+	{
+		ret = SendAllData(conn);
+		if(ret < 0)
 		{
-//			ret = send(client_sockfd,conn->commbuf,conn->buflen,0);
-			ret = SendAllData(conn);
+			LOG(LL_DEBUG,"Socket[%d] seq[%d] send ret[%d],error[%s]",conn->socketfd,conn->seqno,ret,strerror(errno));
 		}
-		pthread_mutex_unlock(&conn->lock);
+		else
+		{
+			LOG(LL_DEBUG,"Socket[%d] seq[%d] send ret[%d]",conn->socketfd,conn->seqno,ret);
+		}
+	}
+	pthread_mutex_unlock(&conn->lock);
 	return NULL;
 }
 
@@ -275,7 +282,7 @@ void Server_thread_ConnectionMgr(void* para_p)
 {
 	Server_t* svr = (Server_t*)para_p;
 	Connection_t* conn,**tmp;
-	const char *key;
+	int key;
 	long curtime,difftime;
 	int ret;
 	
@@ -284,39 +291,39 @@ void Server_thread_ConnectionMgr(void* para_p)
 		sleep(5);
 		map_iter_t iter = map_iter(&svr->mConnectionInfo);
 //		while(0)
-		while ((key = map_next(&svr->mConnectionInfo, &iter))!=NULL)
+		while ((key = map_next(&svr->mConnectionInfo, &iter)) > 0)
 		{
 			curtime =	gettimestamp();
 			tmp = (Connection_t**)map_get(&svr->mConnectionInfo,key);
 			if(tmp == NULL)		continue;
 			conn = *tmp;
 			
-//			ret = pthread_mutex_trylock(&conn->lock);	
-//			if(ret != 0)
-//			{
-//				if(errno == EBUSY)
-//					continue;
-//				else
-//				{
-//					LOG(LL_NOTICE,"pthread_mutex_trylock on connection ret errno=[%s]",strerror(errno));
-//					CloseConnection(conn);
-//					continue;
-//				}
-//			}
+			ret = pthread_mutex_trylock(&conn->lock);	
+			if(ret != 0)
+			{
+				if(errno == EBUSY)
+					continue;
+				else
+				{
+					LOG(LL_NOTICE,"pthread_mutex_trylock on connection ret errno=[%s]",strerror(errno));
+					CloseConnection(conn);
+					continue;
+				}
+			}
 			difftime = curtime - conn->timestamp;
-			LOG(LL_NOTICE,"in Server_thread_ConnectionMgr socket[%s][%d],idletime[%ld]",key,conn->status,difftime);
+			LOG(LL_NOTICE,"in Server_thread_ConnectionMgr socket[%d][%d],seq[%d],idletime[%ld]",key,conn->status,conn->seqno,difftime);
 //			printf("in Server_thread_ConnectionMgr socket[%s][%d],idletime[%ld]\n",key,conn->status,curtime - conn->timestamp);
 			if((conn->status == 1 && (curtime - conn->timestamp)>RCVTIMEOUT)
 				|| (conn->status == 2 && (curtime - conn->timestamp)>SNDTIMEOUT)
 				|| (conn->status == 3 && (curtime - conn->timestamp)>CLOSEWAIT))
 			{
 				shutdown(conn->socketfd,2);
-//				pthread_mutex_unlock(&conn->lock);
+				pthread_mutex_unlock(&conn->lock);
 				CloseConnection(conn);
 				conn = NULL;
 			}
-//			else
-//				pthread_mutex_unlock(&conn->lock);
+			else
+				pthread_mutex_unlock(&conn->lock);
 		}
 	}
 	LOG(LL_NOTICE,"Server_thread_ConnectionMgr thread 0x%x is exiting",pthread_self());

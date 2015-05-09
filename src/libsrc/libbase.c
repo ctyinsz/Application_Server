@@ -8,7 +8,7 @@
 ******************************************************************************/
 int tcpserver_init(int port)
 {
-	int rcd,optv;
+	int rcd = 0,optv = 1;
 	int server_sockfd;
 //	int client_sockfd;	
 	struct sockaddr_in server_sockaddr;

@@ -29,8 +29,9 @@ typedef struct {
   struct { map_base_t base; T *ref; T tmp; }
 
 
-#define map_init(m)\
-  memset(m, 0, sizeof(*(m)))
+#define map_init(m,n)\
+  (	memset(m, 0, sizeof(*(m))),\
+  map_init_(&(m)->base,n)	)
 
 
 #define map_deinit(m)\
@@ -57,13 +58,16 @@ typedef struct {
 #define map_next(m, iter)\
   map_next_(&(m)->base, iter)
 
+#define map_bucketidx(m,key)\
+	key % (m->nbuckets - 1)
 
 void map_deinit_(map_base_t *m);
-void *map_get_(map_base_t *m, const char *key);
-int map_set_(map_base_t *m, const char *key, void *value, int vsize);
-void map_remove_(map_base_t *m, const char *key);
+int map_init_(map_base_t *m,int);
+void *map_get_(map_base_t *m, int key);
+int map_set_(map_base_t *m, int key, void *value, int vsize);
+void map_remove_(map_base_t *m, int key);
 map_iter_t map_iter_(void);
-const char *map_next_(map_base_t *m, map_iter_t *iter);
+int map_next_(map_base_t *m, map_iter_t *iter);
 
 
 typedef map_t(void*) map_void_t;

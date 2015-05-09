@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="GBK"?>
+
+<hsdoc>
+  <docversion>1.0.0</docversion>
+  <checkcode>A182FA66801F7EEBCE2379C56A1F7A5C</checkcode>
+  <levelcheck>6F73426F487078307259413D</levelcheck>
+  <liccode></liccode>
+  <appresreg resclass="414" ressubclass="4" resname="DATA_MSetValue" rescname="多个XML元素赋值" reslabel="" resversn="" useflag="0" activeflag="0" extflag="00000000" readyflag="0" checkcode="" lastModify="2009-09-25 17:30:37" lastModifer="tianhc" rescreator="" createdate="" reslevel="1" subclass="数据元素组件集">
+    <snote></snote>
+    <document></document>
+    <pkgregex compcname="多个XML元素赋值" compfuncname="SDATA_MSetValue" compfile="pub.so" comptype="0" paratype="1" stattype="0" compset="4" debuglog="0" extflag="00000000" sourcefile="~/src/dcomp_src/SDATA.c" foreground="RGB {0, 0, 0}" background="RGB {255, 255, 255}"/>
+    <compparam>
+      <param parasn="0" resclass="413" dftcont="0" nullflag="1" paracname="赋值方式" dctname="" snote=""/>
+      <param parasn="1" resclass="416" dftcont="" nullflag="0" paracname="字符赋值公式字符赋值公式" dctname="" snote=""/>
+    </compparam>
+    <statuscfgs>
+      <status compstatus="-9999" dfttransc="0" snote="缺省"/>
+      <status compstatus="0" dfttransc="0" snote="成功"/>
+    </statuscfgs>
+  </appresreg>
+</hsdoc>
