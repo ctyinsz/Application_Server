@@ -4,7 +4,7 @@ BINDIR=${APPHOME}/bin
 LIBDIR=${APPHOME}/lib
 TMP=${APPHOME}/tmp
 CC=gcc -m32
-CCFLAG =-pg -g -Wall -O2 -march=i486
+CCFLAG =-g -Wall -O3 -march=i486
 VPATH=${TMP}:
 vpath %*.o ${TMP}
 LINKLIB=-lmxml -pthread -lsxml -lpub -lbase -lrt

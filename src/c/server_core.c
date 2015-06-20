@@ -144,16 +144,6 @@ void Server_thread_accept(void* para_p)
 //			LOG(LL_NOTICE,"Open communication with  Client %s on socket %d\n",inet_ntoa(client_sockaddr.sin_addr), client_sock);
 
 			set_nonblocking(client_sock);
-			memset(&event,0x00,sizeof(event));
-			event.events = EPOLLIN;
-			event.data.fd = client_sock;
-			
-			ret = epoll_ctl(recv_p->epfd, EPOLL_CTL_ADD, client_sock, &event);
-			if(ret < 0)
-			{
-				LOG(LL_NOTICE,"epoll_ctl ret[%d][%s]",errno,strerror(errno));
-				continue;
-			}
 			
 			//保存socket和序列号到队列
 			conn = GetConnection(svr);
@@ -163,8 +153,20 @@ void Server_thread_accept(void* para_p)
 				continue;
 			}
 			Connection_init(conn,svr,client_sock,svr->seq_no++);  //  __sync_fetch_and_add(&svr->seq_no,1)
-			conn->status = 1;
-
+			conn->status = 1;			
+					
+			memset(&event,0x00,sizeof(event));
+			event.events = EPOLLIN;
+			event.data.ptr = (void*)conn;
+			
+			ret = epoll_ctl(recv_p->epfd, EPOLL_CTL_ADD, client_sock, &event);
+			if(ret < 0)
+			{
+				LOG(LL_NOTICE,"epoll_ctl ret[%d][%s]",errno,strerror(errno));
+				Connection_deinit(conn);
+				continue;
+			}
+			
 			__sync_fetch_and_add(&recv_p->poll_ev_num,1);
 
 //			pthread_mutex_lock(&recv_p->lock);
@@ -203,15 +205,19 @@ void Server_thread_recv(void* para_p)
 		nfds = epoll_wait(recv_p->epfd,events,MAXEPOLLEVENTS,1000);
 		for(i=0;i<nfds;++i)
 		{
-			client_sockfd = events[i].data.fd;
-			if(client_sockfd < 0)
-				continue;
-			conn = GetConnectionByKey(svr,client_sockfd);
+			conn = (Connection_t*)events[i].data.ptr;
+			
 			if(conn == NULL)
 			{
-				close(client_sockfd);
 				continue;
 			}
+			
+			client_sockfd = conn->socketfd;
+			if(client_sockfd < 0)
+			{
+				CloseConnection(conn);
+				continue;	
+			}		
 			
 			LOG(LL_NOTICE,"Socket[%d] seq[%d] has event[%x].",client_sockfd,conn->seqno,events[i].events);
 			

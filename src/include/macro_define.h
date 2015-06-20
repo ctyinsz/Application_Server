@@ -33,8 +33,8 @@
     } while (0) 
 #define LOG(LL,log_fmt, log_arg...) \
     do{ \
-        logWrite2(LL,   "[%s:%d][%s] " log_fmt "\n", \
-                     __FILE__, __LINE__, __FUNCTION__, ##log_arg); \
+        logWrite2(LL,log_fmt "[%s:%d][%s]\n", \
+                      ##log_arg,__FILE__, __LINE__, __FUNCTION__); \
     } while (0) 
 //============extend===================
 #define MACRO_RET(condition, return_val) {\
